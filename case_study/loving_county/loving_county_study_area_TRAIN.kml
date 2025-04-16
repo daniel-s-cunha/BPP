@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+<Document>
+	<name>StudyArea_chpt_val_v1.kml</name>
+	<Style id="inline">
+		<LineStyle>
+			<color>ff0046fd</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<color>4c005fff</color>
+		</PolyStyle>
+	</Style>
+	<StyleMap id="inline0">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#inline1</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#inline</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Style id="inline1">
+		<LineStyle>
+			<color>ff0046fd</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<color>4c005fff</color>
+		</PolyStyle>
+	</Style>
+	<Placemark>
+		<name>StudyArea_chpt_val_v1</name>
+		<styleUrl>#inline0</styleUrl>
+		<Polygon>
+			<tessellate>1</tessellate>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						-103.630764927816,31.87923817615239,0 -103.627031871484,31.87925678821514,0 -103.6269869997779,31.87695993980755,0 -103.6306481055464,31.87692380308018,0 -103.630764927816,31.87923817615239,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+		<atom:link rel="app" href="https://www.google.com/earth/about/versions/#earth-pro" title="Google Earth Pro 7.3.6.10201"></atom:link>
+	</Placemark>
+</Document>
+</kml>
