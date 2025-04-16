@@ -1,5 +1,5 @@
 # BPP
-This repository is associated with the paper, *Bernstein Polynomial Processes for Continuous Change Time Change Detection*. Here is example code to run the **BPP** model using an intercept only likelihood model,
+This repository is associated with the paper, *Bernstein Polynomial Processes for Continuous Time Change Detection*. Here is example code to run the **BPP** model using an intercept only likelihood model,
 ```
 #Set working directory to BPP first
 setwd('~/Documents/BPP')
