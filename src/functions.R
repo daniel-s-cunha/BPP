@@ -502,7 +502,7 @@ BPP <- function(X,y,K,nu=3,intercept=F){
   q = array(0,dim=n)
   for(k in 1:K){
     if(!intercept) Ey_x = Ey_x + Ey_x_list[[k]]*exp(logpk_y)[k]
-    if(!normal) q = q + Eq_list[[k]]*exp(logpk_y)[k]
+    q = q + Eq_list[[k]]*exp(logpk_y)[k]
   }
   theta = theta_list[[which.max(logpk_y)]]
   return(list(taus=res[[1]]$taus,logpk_y=logpk_y,theta=theta))
