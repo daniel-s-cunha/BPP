@@ -35,8 +35,7 @@ df = read.csv('./case_study/rondonia/rondonia.csv')
 df$ndvi = (df$SR_B4 - df$SR_B3) / (df$SR_B4 + df$SR_B3)
 #
 # Setup data to pass to the fit function:
-j = unique(df$pixel_id)[16]
-sr = na.omit(df[df$pixel_id==j,]); X = sr[,13,drop=F]; y = as.numeric(sr[,14])
+df = na.omit(df); X = df[,13,drop=F]; y = as.numeric(df[,14])
 X[,1] = as.POSIXct(X[,1], format="%Y-%m-%d")
 colnames(X) = 'datetime'
 y = y[order(X[,1])]
