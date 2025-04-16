@@ -1,11 +1,6 @@
-#v8: Fit a single sigma for the whole model
-#v7: Remove identifiability construction
-#library(LaplacesDemon)
 library(mvtnorm)
-library(pracma)
 library(matrixcalc)
-library(magick)
-library(RColorBrewer)
+library(pracma)
 neg.log.epsilon = 52 * log(2) # ~ 36
 
 ldet<-function(M){
@@ -347,9 +342,9 @@ taus_from_Ez<-function(Ezzm1,t,rmj=c()){
   return(tau)
 }
 
-fit <- function(X,y,k,h,psi,lam,discrete=F,geometric=F,intercept=F,normal=F,id=0,tol=1e-3,maxit=10,chtimes=NULL){
+fit <- function(X,y,k,h,psi,lam,discrete=F,geometric=F,intercept=F,normal=F,id=0,tol=1e-3,maxit=10,chtimes=NULL,nu=3){
   #Assume X df has "datetime" as a single column, ordered by date with y
-  if(normal){nu=NULL}else{nu=3}#nu=0.1}
+  if(normal){nu=NULL}#else{nu=3}#nu=0.1}
   a = init_data_priors(y,X,psi,lam,h,intercept)
   y=a$y; t=a$t; X=a$X; Phi_inv=a$Phi_inv; X_pred=a$X_pred
   #X = X[,1:6]; X_pred = X_pred[,1:6]; Phi_inv = Phi_inv[1:6,1:6]
@@ -372,7 +367,7 @@ fit <- function(X,y,k,h,psi,lam,discrete=F,geometric=F,intercept=F,normal=F,id=0
       if(!normal){ 
         #nu = am_nu(y,theta,s2,nu,Eq,Elogq)
         logpy_k = sum(dt.scaled(y,nu,X%*%theta,s2^0.5,log=T))
-        cat('nu = ',nu,'\n')
+        #cat('nu = ',nu,'\n')
       }else{
         logpy_k = sum(dnorm(x = y,mean = X%*%theta,sd = s2^0.5,log=T))
       }
@@ -466,15 +461,15 @@ fit <- function(X,y,k,h,psi,lam,discrete=F,geometric=F,intercept=F,normal=F,id=0
   }
 }
 
-fit_EM <- function(X,y,K,h,psi,lam,quants=c(0.025,0.5,0.975),discrete=F,geometric=F,intercept=F,normal=F,nonInf_pk=F){
+fit_EM <- function(X,y,K,h=2,psi=0.1,lam=1,nu=3,quants=c(0.025,0.5,0.975),discrete=F,geometric=F,intercept=F,normal=F,nonInf_pk=F){
   n = length(y)
   Ez_list = list(); Ey_x_list=list(); Eq_list=list(); theta_list=list();rmj_list=list(); Phi_inv_list=list();sigma_list=list()
   logpy_k = c()
   K_sub = K
   for(k in 1:K){
     cat("Running EM initialization for k =",k,"regimes\n")
-    b = fit(X,y,k,h,psi,lam,discrete=discrete,geometric=geometric,intercept=intercept,normal=normal)
-    catn(b$rmj)
+    b = fit(X,y,k,h,psi,lam,nu=nu,discrete=discrete,geometric=geometric,intercept=intercept,normal=normal)
+    #
     Ez_list[[k]] = b$Ez; Eq_list[[k]] = b$Eq; theta_list[[k]] = b$theta; Phi_inv_list[[k]] = b$Phi_inv; sigma_list[[k]] = b$s2
     logpy_k = c(logpy_k,b$logpy_k)
     if(!intercept) Ey_x_list[[k]] = compute_Ey_x(b$t,b$X_pred[,2],b$Ez,b$theta,b$X_pred,b$rmj)
@@ -493,14 +488,14 @@ fit_EM <- function(X,y,K,h,psi,lam,quants=c(0.025,0.5,0.975),discrete=F,geometri
   return(list(res=res,logpk_y=logpk_y,t=b$t,t_pred = b$X_pred[,2],Ey_x=Ey_x,q=q,theta=theta))
 }
 
-fit_EM2 <- function(X,y,K,h,psi,lam,quants=c(0.025,0.5,0.975),discrete=F,geometric=F,intercept=F,normal=F){
+fit_EM2 <- function(X,y,K,h,psi,lam,nu=3,quants=c(0.025,0.5,0.975),discrete=F,geometric=F,intercept=F,normal=F){
   n = length(y)
   Ez_list = list(); Phi_inv_list=list();sigma_list=list()
   logpy_k = c()
   for(k in 1:K){
     cat("Running EM initialization for k =",k,"regimes\n")
-    b = fit(X,y,k,h,psi,lam,discrete=discrete,geometric=geometric,intercept=intercept,normal=normal)
-    catn(b$rmj)
+    b = fit(X,y,k,h,psi,lam,nu=nu,discrete=discrete,geometric=geometric,intercept=intercept,normal=normal)
+    #
     Ez_list[[k]] = b$Ez; Phi_inv_list[[k]] = b$Phi_inv; sigma_list[[k]] = b$s2
     logpy_k = c(logpy_k,b$logpy_k)
   }
@@ -566,7 +561,7 @@ logprior <- function(K,n,t,Phi_inv_list,sigma_list,nonInf_pk=F,intercept=F,discr
       }
   }
   logpr = logpr - lse(logpr)
-  catn(logpr)
+  #
   return(logpr)
 }
 
