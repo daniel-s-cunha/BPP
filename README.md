@@ -4,6 +4,7 @@ This repository is associated with the paper, *Bernstein Polynomial Processes fo
 #Set working directory to BPP first
 setwd('~/Documents/BPP')
 source('./src/functions.R')
+set.seed(7)
 #
 n = 500; k_star = 3; #k_star is the true number of segments
 soc = 0.5 #size of true changes
