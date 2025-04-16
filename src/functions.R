@@ -352,12 +352,12 @@ taus_from_Ez<-function(Ezzm1,t,rmj=c()){
   for(j in 1:(k-1)){
     i=1;p=0
     while(p<0.5){
-      catn(c(i,j,j+1)); catn(p)
+      #catn(c(i,j,j+1)); catn(p)
       p = p + Ezzm1[i,j,j+1]
       i=i+1
     }
     tau = c(tau,i)
-    catn(tau)
+    #catn(tau)
   }
   return(tau)
 }
@@ -391,7 +391,7 @@ fit <- function(X,y,k,h,psi,lam,discrete=F,geometric=F,intercept=F,normal=F,id=0
       }else{
         logpy_k = sum(dnorm(x = y,mean = X%*%theta,sd = s2^0.5,log=T))
       }
-      cat("Marginal log(p(y)): ", logpy_k,"\n\n")
+      #cat("Marginal log(p(y)): ", logpy_k,"\n\n")
       if(abs(logpy_k_old - logpy_k)/abs(logpy_k_old) < tol) break else logpy_k_old = logpy_k
       # bins = as.numeric(cut(Eq,10))
       # pal = brewer.pal(8, 'Dark2')
@@ -457,17 +457,17 @@ fit <- function(X,y,k,h,psi,lam,discrete=F,geometric=F,intercept=F,normal=F,id=0
         Ezlogq = compute_Ezlogq(y,X,theta,s2,nu)
         if(length(rmj)>0){Elogq = rowSums(Ezlogq[,-rmj]*Ez[,-rmj])} else{Elogq = rowSums(Ezlogq*Ez)}
         #nu = am_nu(y,theta,s2,nu,Eq,Elogq)
-        cat('nu = ',nu,'\n')
+        #cat('nu = ',nu,'\n')
       }
       if(geometric){
         ps = am_ps(Ezzm1)
-        cat("Geometric probabilities of change: ", ps,'\n')
+        #cat("Geometric probabilities of change: ", ps,'\n')
         p_z_zm1 = compute_p_z_zm1_geometric(t,n,k,ps) #dim = (n-1)xk
         logp_z_zm1 = compute_logp_z_zm1(p_z_zm1,n,k)
       }
       #
       # Check convergence
-      cat("Marginal log(p(y)): ", logpy_k,"\n\n")
+      #cat("Marginal log(p(y)): ", logpy_k,"\n\n")
       if(abs(logpy_k_old - logpy_k)/abs(logpy_k_old) < tol) break else logpy_k_old = logpy_k
     }
     logp_y_z = compute_logp_y_z(y,X,nu,theta,s2,intercept,normal)
@@ -487,7 +487,7 @@ fit_EM <- function(X,y,K,h=2,psi=0.1,lam=1,nu=3,quants=c(0.025,0.5,0.975),discre
   logpy_k = c()
   K_sub = K
   for(k in 1:K){
-    cat("Running EM initialization for k =",k,"regimes\n")
+    cat("Running EM for k =",k,"regimes\n")
     b = fit(X,y,k,h,psi,lam,nu=nu,discrete=discrete,geometric=geometric,intercept=intercept,normal=normal)
     #
     Ez_list[[k]] = b$Ez; Eq_list[[k]] = b$Eq; theta_list[[k]] = b$theta; Phi_inv_list[[k]] = b$Phi_inv; sigma_list[[k]] = b$s2
@@ -496,7 +496,7 @@ fit_EM <- function(X,y,K,h=2,psi=0.1,lam=1,nu=3,quants=c(0.025,0.5,0.975),discre
     #if(length(b$rmj)>0){K_sub=k-1; break}
   }
   logpk_y = compute_pk_y(n,logpy_k,b$t,Phi_inv_list,sigma_list,intercept=intercept,nonInf_pk=nonInf_pk,discrete=discrete)
-  catn(logpk_y)
+  #catn(logpk_y)
   res = lapply(quants, function(qu) bayes_est(qu,n,K,Ez_list,exp(logpk_y),samples=F))
   Ey_x = array(0,dim=5000)
   q = array(0,dim=n)
@@ -513,7 +513,7 @@ fit_EM2 <- function(X,y,K,h,psi,lam,nu=3,quants=c(0.025,0.5,0.975),discrete=F,ge
   Ez_list = list(); Phi_inv_list=list();sigma_list=list()
   logpy_k = c()
   for(k in 1:K){
-    cat("Running EM initialization for k =",k,"regimes\n")
+    cat("Running EM for k =",k,"regimes\n")
     b = fit(X,y,k,h,psi,lam,nu=nu,discrete=discrete,geometric=geometric,intercept=intercept,normal=normal)
     #
     Ez_list[[k]] = b$Ez; Phi_inv_list[[k]] = b$Phi_inv; sigma_list[[k]] = b$s2
@@ -913,7 +913,7 @@ fit_gibbs <- function(X,y,K,h,psi,lam,discrete=F,geometric=F,intercept=T,normal=
                             modsel_ps = gs$modsel_ps)
   }
   logpk_y = pk_y_gibbs(n,t,K,em_list,modsel_list)
-  catn(logpk_y)
+  #catn(logpk_y)
   res = bayes_est(0.5,n,K,Z_list,exp(logpk_y))
   return(list(res=res, logpk_y = logpk_y,K=K,t=t))
 }
@@ -1017,7 +1017,7 @@ calc_omit_commit_window<-function(ta,tt,window=0.04353531){
   }else if(length(ta)>0){
     for(j in 1:length(ta)){
       ct = as.numeric(all((abs(ta[j]-tt)>=window)))
-      catn(all((abs(ta[j]-tt)>=window)))
+      #catn(all((abs(ta[j]-tt)>=window)))
       commission = commission + ct
       if(ct==0) tt = tt[-which.min(abs(ta[j]-tt))] #remove closest tt so that it is not reused
     }
@@ -1028,7 +1028,7 @@ calc_omit_commit_window<-function(ta,tt,window=0.04353531){
   }else if(length(tt)>0){
     for(j in 1:length(tt)){
       ct = as.numeric(all((abs(tt[j]-ta)>=window)))
-      catn(all((abs(tt[j]-ta)>=window)))
+      #catn(all((abs(tt[j]-ta)>=window)))
       omission = omission + ct
       if(ct==0) ta = ta[-which.min(abs(tt[j]-ta))] #remove closest tt so that it is not reused
     }
