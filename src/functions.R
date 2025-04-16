@@ -1,7 +1,27 @@
-library(mvtnorm)
-library(matrixcalc)
-library(pracma)
 neg.log.epsilon = 52 * log(2) # ~ 36
+
+rmvnorm <- function(mean, sigma){
+    p = nrow(sigma)
+    R = chol(sigma, pivot = TRUE)
+    R = R[, order(attr(R, "pivot"))]
+    res = crossprod(R,rnorm(p))
+    res+mean
+}
+
+ldmvnorm <- function(x, mean, sigma) {
+  p = length(x)
+  chol_sigma = chol(sigma)
+  log_det_sigma = 2 * sum(log(diag(chol_sigma)))
+  diff = x - mean
+  z = backsolve(chol_sigma, diff, transpose = TRUE)
+  qf = crossprod(z)[1,1]
+  ld = -0.5 * (qf + p * log(2 * pi) + log_det_sigma)
+  
+  return(ld)
+}
+
+
+vec <- function(x){t(t(as.vector(x)))}
 
 ldet<-function(M){
   determinant(M,logarithm=T)$modulus[1]
@@ -239,7 +259,7 @@ compute_prior <-function(k,theta,s2,Phi_inv){
   ch = chol(Phi_inv)
   Phi = chol_solve(ch,diag(dim(Phi_inv)[1]))
   for(j in 1:k){
-    logpr = logpr + dmvnorm(x=theta[,j],sigma = s2[j]*Phi,log=T) - log(sqrt(s2[j]))
+    logpr = logpr + ldmvnorm(x=theta[,j],sigma = s2[j]*Phi) - log(sqrt(s2[j]))
     #dnorm(theta[j],0,1/s2[j],log=T)
   }
   return(logpr)
@@ -609,6 +629,24 @@ create_design <- function(orig_df,dt,h,tot_days,period){
   return(orig_df)
 }
 
+bdiag<-function(...){
+  lmat = list(...)
+  nrs = sapply(lmat, nrow)
+  ncs = sapply(lmat, ncol)
+  nr = sum(nrs)
+  nc = sum(ncs)
+  M = matrix(0,nr,nc)
+  prevr=1; prevc = 1
+  for(j in 1:length(lmat)){
+    nxtr = (prevr+nrs[j]-1)
+    nxtc = (prevc+ncs[j]-1)
+    M[prevr:nxtr,prevc:nxtc] = lmat[[j]]
+    prevr = nxtr+1
+    prevc = nxtc+1
+  }
+  return(M)
+}
+
 create_ia_design <- function(orig_df,h,tot_days,period){
   #assume orig_df = cbind(intercept, t, datetime)
   dt = orig_df$datetime; orig_df$datetime = NULL
@@ -620,7 +658,7 @@ create_ia_design <- function(orig_df,h,tot_days,period){
     xi = unique(orig_df$year)[i]
     df_years[[i]]<-as.matrix(orig_df[orig_df$year==xi,(nc-2*h+1):nc,drop=F])
   }
-  harmonic_ma = do.call(blkdiag,df_years)
+  harmonic_ma = do.call(bdiag,df_years)
   m = length(unique(orig_df$year))
   for(xi in 1:(m-1)){
     #sin_0,sin1_0,sin2_0,cos_0,cos2_0, cos3_0 | sin_1,sin1_1,sin2_1,cos_1,cos2_1,cos3_1
@@ -710,10 +748,10 @@ sample_theta <- function(k,X,y,z,q,s2,Phi_inv,theta_old,init=NULL,extra=F){
       ch = try(chol(Lam))
       Lam_inv = s2[j]*chol_solve(ch,diag(dim(Lam)[1]))
       Etheta = chol_solve(ch,crossprod(X[zj,,drop=F],diag(q[zj],nrow=length(q[zj]))%*%y[zj]))
-      theta[,j] = rmvnorm(n=1,mean=Etheta,sigma=Lam_inv)[1,]
+      theta[,j] = rmvnorm(n=1,mean=Etheta,sigma=Lam_inv)
     }else{theta[,j] = rep(0,p)}#theta_old[,j]}
     #
-    if(extra) logpth_hat_y = logpth_hat_y + dmvnorm(init$theta[,j],mean=Etheta,sigma=Lam_inv,log=T)
+    if(extra) logpth_hat_y = logpth_hat_y + ldmvnorm(init$theta[,j],mean=Etheta,sigma=Lam_inv)
   }
   return(list(theta=theta,logpth_hat_y=logpth_hat_y))
 }
