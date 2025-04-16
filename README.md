@@ -23,9 +23,10 @@ res = BPP(ti,y,K=5,intercept=T)
 taus = res$taus
 #
 #Plot data and true changes
-plot(ti,y);abline(v=ti[chpts],col='orange',lwd=2);abline(v=ti[taus],col='purple',lty=2,lwd=2)
+plot(ti,y,xlab='time',ylab='y');abline(v=ti[chpts],col='orange',lwd=2);abline(v=ti[taus],col='purple',lty=2,lwd=2)
+legend("bottomright", legend = c("True changes", "Detected changes"),col=c("orange", "purple"),lty=c(1,2),lwd=2)
 ```
-Here is example code to run the Interannually Varying Harmonics model on remote sensing data from a deforestation example in the Amazon rainforest,
+Here is example code to run the Interannually Varying Harmonics model on remote sensing data from the deforestation example in the Amazon rainforest from the paper,
 ```
 #Set working directory first
 setwd('~/Documents/BPP')
@@ -46,5 +47,6 @@ res = BPP(X,y,K=5,intercept=F)
 taus = res$taus
 #
 #Plot data and true changes
-plot(X[,1],y);abline(v=X[taus,1],col='purple',lty=2,lwd=2)
+plot(X[,1],y,xlab='Date',ylab='NDVI');abline(v=X[taus,1],col='purple',lty=2,lwd=2);
+legend("bottomright", legend = c("Detected change"), col = c("purple"), lty = c(2), lwd = 2)
 ```
