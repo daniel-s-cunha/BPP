@@ -481,6 +481,34 @@ fit <- function(X,y,k,h,psi,lam,discrete=F,geometric=F,intercept=F,normal=F,id=0
   }
 }
 
+BPP <- function(X,y,K,nu=3,intercept=F){
+  n = length(y); quants=c(0.5); h=2; psi=0.1; lam=1;
+  Ez_list = list(); Ey_x_list=list(); Eq_list=list(); theta_list=list();rmj_list=list(); Phi_inv_list=list();sigma_list=list()
+  logpy_k = c()
+  K_sub = K
+  for(k in 1:K){
+    cat("Running EM for k =",k,"regimes\n")
+    b = fit(X,y,k,h,psi,lam,nu=nu,discrete=F,geometric=F,intercept=intercept,normal=F)
+    #
+    Ez_list[[k]] = b$Ez; Eq_list[[k]] = b$Eq; theta_list[[k]] = b$theta; Phi_inv_list[[k]] = b$Phi_inv; sigma_list[[k]] = b$s2
+    logpy_k = c(logpy_k,b$logpy_k)
+    if(!intercept) Ey_x_list[[k]] = compute_Ey_x(b$t,b$X_pred[,2],b$Ez,b$theta,b$X_pred,b$rmj)
+    #if(length(b$rmj)>0){K_sub=k-1; break}
+  }
+  logpk_y = compute_pk_y(n,logpy_k,b$t,Phi_inv_list,sigma_list,intercept=intercept,nonInf_pk=F,discrete=F)
+  #catn(logpk_y)
+  res = lapply(quants, function(qu) bayes_est(qu,n,K,Ez_list,exp(logpk_y),samples=F))
+  Ey_x = array(0,dim=5000)
+  q = array(0,dim=n)
+  for(k in 1:K){
+    if(!intercept) Ey_x = Ey_x + Ey_x_list[[k]]*exp(logpk_y)[k]
+    if(!normal) q = q + Eq_list[[k]]*exp(logpk_y)[k]
+  }
+  theta = theta_list[[which.max(logpk_y)]]
+  return(list(taus=res[[1]]$taus,logpk_y=logpk_y,theta=theta))
+}
+
+
 fit_EM <- function(X,y,K,h=2,psi=0.1,lam=1,nu=3,quants=c(0.025,0.5,0.975),discrete=F,geometric=F,intercept=F,normal=F,nonInf_pk=F){
   n = length(y)
   Ez_list = list(); Ey_x_list=list(); Eq_list=list(); theta_list=list();rmj_list=list(); Phi_inv_list=list();sigma_list=list()
