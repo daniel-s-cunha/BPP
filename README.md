@@ -19,8 +19,8 @@ for(j in c(chpts,n)){
   cnt = cnt + 1
 }
 # Fit BPP model with intercept only t-distributed likelihood with nu=3 degrees of freedom
-res = fit_EM(ti,y,K=5,intercept=T)
-taus = res$res[[2]]$taus
+res = BPP(ti,y,K=5,intercept=T)
+taus = res$taus
 #
 #Plot data and true changes
 plot(ti,y);abline(v=ti[chpts],col='orange',lwd=2);abline(v=ti[taus],col='purple',lty=2,lwd=2)
@@ -42,8 +42,8 @@ y = y[order(X[,1])]
 X[,1] = X[order(X[,1]),]
 #
 # Fit BPP model with intercept only t-distributed likelihood with nu=3 degrees of freedom
-res = fit_EM(X,y,K=5,intercept=F)
-taus = res$res[[2]]$taus
+res = BPP(X,y,K=5,intercept=F)
+taus = res$taus
 #
 #Plot data and true changes
 plot(X[,1],y);abline(v=X[taus,1],col='purple',lty=2,lwd=2)
