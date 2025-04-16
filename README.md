@@ -1,5 +1,5 @@
 # BPP
-This repository is associated with the paper, *Bernstein Polynomial Processes for Continuous Time Change Detection*. Here is example code to run the **BPP** model using an intercept only t-distributed likelihood model with 3 degrees of freedom,
+This repository is associated with the paper, *Bernstein Polynomial Processes for Continuous Time Change Detection*. Here is example code to run the **BPP** model using an intercept-only t-distributed likelihood model with $\nu=3$ degrees of freedom,
 ```
 #Set working directory to BPP first
 setwd('~/Documents/BPP')
@@ -26,7 +26,7 @@ taus = res$taus
 plot(ti,y,xlab='time',ylab='y');abline(v=ti[chpts],col='orange',lwd=2);abline(v=ti[taus],col='purple',lty=2,lwd=2)
 legend("bottomright", legend = c("True changes", "Detected changes"),col=c("orange", "purple"),lty=c(1,2),lwd=2)
 ```
-By turning `Intercept=F`, we can run the interannually varying harmonics phenology model on remote sensing data from the deforestation example in the Amazon rainforest from the paper,
+By turning `intercept=F`, we can run the interannually varying harmonics phenology model on remote sensing data from the deforestation example in the Amazon rainforest from the paper,
 ```
 #Set working directory first
 setwd('~/Documents/BPP')
@@ -42,8 +42,8 @@ colnames(X) = 'datetime'
 y = y[order(X[,1])]
 X[,1] = X[order(X[,1]),]
 #
-# Fit BPP model with intercept only t-distributed likelihood with nu=3 degrees of freedom
-res = BPP(X,y,K=5,intercept=F)
+# Fit BPP model using the phenology model with t-distributed likelihood with nu=3 degrees of freedom,
+res = BPP(X,y,K=5,nu=3,intercept=F)
 taus = res$taus
 #
 #Plot data and true changes
