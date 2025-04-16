@@ -6,7 +6,7 @@ loc_names = c('Semi-arid Shrubland','Rondonia Deforestation','Crop Rotation')
 loc_pids = c(6,16,3)
 loc_Ks = c(6,6,6)
 #
-l = 1
+l = 2
 setwd(paste0("~/Documents/BPP/case_study/",locations[l]))
 
 #pixel_id
@@ -32,13 +32,12 @@ change_dates = as.POSIXct(change_dates,format="%m/%d/%Y",origin='2000-01-01')
 tau_true = data.frame(change_dates)
 colnames(tau_true)= 'datetime'
 
-j = unique(df$pixel_id)[pid]
 h=2; psi=.1; lam=1; K=loc_Ks[l]; geometric=F 
 #Permian Basin: pid=10,K=10
 #Rondonia: pid=16,K=6
 #CropRotation: pid=20,K=6
 
-sr = na.omit(df[df$pixel_id==j,]); X = sr[,13,drop=F]; y = as.numeric(sr[,14])
+sr = na.omit(df); X = sr[,13,drop=F]; y = as.numeric(sr[,14])
 X[,1] = as.POSIXct(X[,1], format="%Y-%m-%d")
 colnames(X) = 'datetime'
 tau_true = data.frame(c(X[1,1],tau_true[,1],X[dim(X)[1],1]))
