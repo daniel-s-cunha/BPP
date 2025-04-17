@@ -492,18 +492,9 @@ BPP <- function(X,y,K,nu=3,intercept=F){
     #
     Ez_list[[k]] = b$Ez; Eq_list[[k]] = b$Eq; theta_list[[k]] = b$theta; Phi_inv_list[[k]] = b$Phi_inv; sigma_list[[k]] = b$s2
     logpy_k = c(logpy_k,b$logpy_k)
-    if(!intercept) Ey_x_list[[k]] = compute_Ey_x(b$t,b$X_pred[,2],b$Ez,b$theta,b$X_pred,b$rmj)
-    #if(length(b$rmj)>0){K_sub=k-1; break}
   }
   logpk_y = compute_pk_y(n,logpy_k,b$t,Phi_inv_list,sigma_list,intercept=intercept,nonInf_pk=F,discrete=F)
-  #catn(logpk_y)
-  res = lapply(quants, function(qu) bayes_est(qu,n,K,Ez_list,exp(logpk_y),samples=F))
-  Ey_x = array(0,dim=5000)
-  q = array(0,dim=n)
-  for(k in 1:K){
-    if(!intercept) Ey_x = Ey_x + Ey_x_list[[k]]*exp(logpk_y)[k]
-    q = q + Eq_list[[k]]*exp(logpk_y)[k]
-  }
+  res = lapply(quants, function(qu) bayes_est(qu,n,K,Ez_list,exp(logpk_y),samples=F))  
   theta = theta_list[[which.max(logpk_y)]]
   return(list(taus=res[[1]]$taus,logpk_y=logpk_y,theta=theta))
 }
