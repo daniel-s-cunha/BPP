@@ -270,8 +270,9 @@ am_theta <- function(Eqz,Phi_inv,X,y,th,intercept=F){
     k = dim(Eqz)[2]; n = length(y); p = dim(X)[2]; th = array(0,dim=c(p,k))
     for(j in 1:k){
       W = diag(Eqz[,j])
-      ch = try(chol(crossprod(X,W)%*%X + Phi_inv),silent=T)
-      if(class(ch)[1]!='try-error'){th[,j] = chol_solve(ch,crossprod(X,W%*%y))} else{th[,j] = rep(0,p)}
+      XtW = crossprod(X,W)
+      ch = try(chol(XtW%*%X + Phi_inv),silent=T)
+      if(class(ch)[1]!='try-error'){th[,j] = chol_solve(ch,XtW%*%y)} else{th[,j] = rep(0,p)}
     }
     return(list(th=th))
   }else{
@@ -289,13 +290,15 @@ am_theta <- function(Eqz,Phi_inv,X,y,th,intercept=F){
     Phi_inv_d = Phi_inv[1:dw,1:dw]
     for(j in 1:k){
       W = diag(Eqz[,j])
-      ch = try(chol(crossprod(Xd,W)%*%Xd + Phi_inv_d),silent=T)
-      th[1:dw,j] = chol_solve(ch,crossprod(Xd,W)%*%y_tild)
+      XdtW = crossprod(Xd,W)
+      ch = try(chol(XdtW%*%Xd + Phi_inv_d),silent=T)
+      th[1:dw,j] = chol_solve(ch,XdtW%*%y_tild)
       y_star[(1:n)+n*(j-1)] = y - Xd%*%th[1:dw,j]
     }
-    ch = try(chol(crossprod(X_star,W_star)%*%X_star + Phi_inv[up:p,up:p]),silent=T)
-    if(class(ch)[1]!='try-error'){th_star = chol_solve(ch,crossprod(X_star,W_star)%*%y_star)}
-    for(j in 1:k){th[up:p,j] = th_star}
+    XtW_star = crossprod(X_star,W_star)
+    ch = try(chol(XtW_star%*%X_star + Phi_inv[up:p,up:p]),silent=T)
+    if(class(ch)[1]!='try-error'){th_star = chol_solve(ch,XtW_star%*%y_star)}
+    th[up:p,] = th_star
     return(list(th=th))
   }
 }
