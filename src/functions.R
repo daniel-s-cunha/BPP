@@ -486,14 +486,13 @@ fit <- function(X,y,k,h,psi,lam,discrete=F,geometric=F,intercept=F,normal=F,id=0
 
 BPP <- function(X,y,K,nu=3,intercept=F){
   n = length(y); quants=c(0.5); h=2; psi=0.1; lam=1;
-  Ez_list = list(); Ey_x_list=list(); Eq_list=list(); theta_list=list();rmj_list=list(); Phi_inv_list=list();sigma_list=list()
+  Ez_list = list(); Ey_x_list=list(); theta_list=list();rmj_list=list(); Phi_inv_list=list();sigma_list=list()
   logpy_k = c()
-  K_sub = K
   for(k in 1:K){
     cat("Running EM for k =",k,"regimes\n")
     b = fit(X,y,k,h,psi,lam,nu=nu,discrete=F,geometric=F,intercept=intercept,normal=F)
     #
-    Ez_list[[k]] = b$Ez; Eq_list[[k]] = b$Eq; theta_list[[k]] = b$theta; Phi_inv_list[[k]] = b$Phi_inv; sigma_list[[k]] = b$s2
+    Ez_list[[k]] = b$Ez; theta_list[[k]] = b$theta; Phi_inv_list[[k]] = b$Phi_inv; sigma_list[[k]] = b$s2
     logpy_k = c(logpy_k,b$logpy_k)
   }
   logpk_y = compute_pk_y(n,logpy_k,b$t,Phi_inv_list,sigma_list,intercept=intercept,nonInf_pk=F,discrete=F)
