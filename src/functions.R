@@ -234,10 +234,10 @@ backward <- function(logp_y_z,logp_z_zm1){
 }
 
 #FIXME: Return logp_y so you don't need to recalculate
-compute_Ez <-function(logalpha,logbeta){
+compute_Ez <-function(logalpha,logbeta,logpy_k){
   n = dim(logalpha)[1]
-  logp_y = lse(logalpha[n,]) #logp_y = apply(logalpha+logbeta,1,lse)
-  Ez = exp(logalpha + logbeta - logp_y)
+  #logpy_k = lse(logalpha[n,]) #logp_y = apply(logalpha+logbeta,1,lse)
+  Ez = exp(logalpha + logbeta - logpy_k)
   return(Ez) 
 }
 
@@ -367,10 +367,9 @@ taus_from_Ez<-function(Ezzm1,t,rmj=c()){
 
 fit <- function(X,y,k,h,psi,lam,discrete=F,geometric=F,intercept=F,normal=F,id=0,tol=1e-3,maxit=10,chtimes=NULL,nu=3){
   #Assume X df has "datetime" as a single column, ordered by date with y
-  if(normal){nu=NULL}#else{nu=3}#nu=0.1}
+  geometric=F; if(normal){nu=NULL}#else{nu=3}#nu=0.1}
   a = init_data_priors(y,X,psi,lam,h,intercept)
   y=a$y; t=a$t; X=a$X; Phi_inv=a$Phi_inv; X_pred=a$X_pred
-  #X = X[,1:6]; X_pred = X_pred[,1:6]; Phi_inv = Phi_inv[1:6,1:6]
   n = length(y); p = dim(X)[2];
   #
   if(k==1){
@@ -394,14 +393,7 @@ fit <- function(X,y,k,h,psi,lam,discrete=F,geometric=F,intercept=F,normal=F,id=0
       }else{
         logpy_k = sum(dnorm(x = y,mean = X%*%theta,sd = s2^0.5,log=T))
       }
-      #cat("Marginal log(p(y)): ", logpy_k,"\n\n")
       if(abs(logpy_k_old - logpy_k)/abs(logpy_k_old) < tol) break else logpy_k_old = logpy_k
-      # bins = as.numeric(cut(Eq,10))
-      # pal = brewer.pal(8, 'Dark2')
-      # palgen = colorRampPalette(c(pal[2],pal[3]))
-      # palq = palgen(10)
-      # plot(t,y,xlim=c(0,1),col=palq[bins],pch=16,xlab="",ylab="NDVI",xaxt='n')
-      # if(!intercept) lines(X_pred[,2],X_pred%*%theta,col=pal[3])
     }
     return(list(t=t,logpy_k = logpy_k, Ez = array(1,dim=c(n,1)), taus = NULL,theta=theta,s2=s2, X=X,Eq=Eq,ps=NULL,Phi_inv = Phi_inv,nu=nu,X_pred=X_pred))
   }else{
@@ -411,16 +403,6 @@ fit <- function(X,y,k,h,psi,lam,discrete=F,geometric=F,intercept=F,normal=F,id=0
       p_z = compute_p_z_disc(t,k)
       p_z_zm1 = compute_p_z_zm1_disc(n,k,p_z)
       logp_z_zm1 = compute_logp_z_zm1(p_z_zm1,n,k)
-      theta = am_theta(p_z,Phi_inv,X,y,theta,intercept)$th
-    }else if(geometric){
-      a = (n/k)/10; b = 0.1 #page 232 Chib 1996, w/ noninf n/k regime duration
-      ps = rep(a/(a+b),k)
-      p_z = array(1/k,dim=c(n,k))
-      p_z_zm1 = compute_p_z_zm1_geometric(t,n,k,ps)
-      logp_z_zm1 = compute_logp_z_zm1(p_z_zm1,n,k)
-      logalpha = forward(array(0,dim=c(n,k)),logp_z_zm1)
-      logbeta = backward(array(0,dim=c(n,k)),logp_z_zm1)
-      Ez = compute_Ez(logalpha,logbeta)
       theta = am_theta(p_z,Phi_inv,X,y,theta,intercept)$th
     }else {
       p_z = compute_p_z(t,k)
@@ -438,9 +420,9 @@ fit <- function(X,y,k,h,psi,lam,discrete=F,geometric=F,intercept=F,normal=F,id=0
       logp_y_z = compute_logp_y_z(y,X,nu,theta,s2,intercept,normal)
       logalpha = forward(logp_y_z,logp_z_zm1)
       logbeta = backward(logp_y_z,logp_z_zm1)
-      logpy_k = lse(logalpha[n,]) #Note: apply((logalpha + logbeta), 1, lse) are all equivalent
-      Ez = compute_Ez(logalpha,logbeta)
-      Ezzm1 = compute_Ezzm1(logalpha,logbeta,logp_y_z,logp_z_zm1)
+      logpy_k = lse(logalpha[n,])
+      Ez = compute_Ez(logalpha,logbeta,logpy_k)
+      #Ezzm1 = compute_Ezzm1(logalpha,logbeta,logp_y_z,logp_z_zm1)
       Eqz = array(0,dim=c(n,k))
       if(!normal){
         for(j in 1:k){
@@ -462,12 +444,6 @@ fit <- function(X,y,k,h,psi,lam,discrete=F,geometric=F,intercept=F,normal=F,id=0
         #nu = am_nu(y,theta,s2,nu,Eq,Elogq)
         #cat('nu = ',nu,'\n')
       }
-      if(geometric){
-        ps = am_ps(Ezzm1)
-        #cat("Geometric probabilities of change: ", ps,'\n')
-        p_z_zm1 = compute_p_z_zm1_geometric(t,n,k,ps) #dim = (n-1)xk
-        logp_z_zm1 = compute_logp_z_zm1(p_z_zm1,n,k)
-      }
       #
       # Check convergence
       #cat("Marginal log(p(y)): ", logpy_k,"\n\n")
@@ -478,7 +454,7 @@ fit <- function(X,y,k,h,psi,lam,discrete=F,geometric=F,intercept=F,normal=F,id=0
     logbeta = backward(logp_y_z,logp_z_zm1)
     logpy_k = lse(logalpha[n,])
     Ez = compute_Ez(logalpha,logbeta)
-    Ezzm1 = compute_Ezzm1(logalpha,logbeta,logp_y_z,logp_z_zm1)
+    #Ezzm1 = compute_Ezzm1(logalpha,logbeta,logp_y_z,logp_z_zm1)
     #
     return(list(t=t,logpy_k=logpy_k,  Ez=Ez, theta=theta, s2=s2, X=X, Eq=Eq, ps=ps, p_z_zm1=p_z_zm1, Phi_inv = Phi_inv, nu=nu,X_pred=X_pred,rmj=rmj))
   }
