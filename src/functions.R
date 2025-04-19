@@ -453,7 +453,7 @@ fit <- function(X,y,k,h,psi,lam,discrete=F,geometric=F,intercept=F,normal=F,id=0
     logalpha = forward(logp_y_z,logp_z_zm1)
     logbeta = backward(logp_y_z,logp_z_zm1)
     logpy_k = lse(logalpha[n,])
-    Ez = compute_Ez(logalpha,logbeta)
+    Ez = compute_Ez(logalpha,logbeta,logpy_k)
     #Ezzm1 = compute_Ezzm1(logalpha,logbeta,logp_y_z,logp_z_zm1)
     #
     return(list(t=t,logpy_k=logpy_k,  Ez=Ez, theta=theta, s2=s2, X=X, Eq=Eq, ps=ps, p_z_zm1=p_z_zm1, Phi_inv = Phi_inv, nu=nu,X_pred=X_pred,rmj=rmj))
