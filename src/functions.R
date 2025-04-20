@@ -209,10 +209,7 @@ forward <-function(logp_y_z,logp_z_zm1){
   logalpha[1,1] = logp_y_z[1,1]
   #
   for(i in 2:n){
-    w = array(dim=c(k,k))
-    for(j in 1:k){
-      w[j,] = logalpha[i-1,j]+logp_z_zm1[i-1,j,]
-    }
+    w = logalpha[i-1,]+logp_z_zm1[i-1,,]
     logalpha[i,] = logp_y_z[i,] + apply(w,2,lse)
   }
   return(logalpha)
@@ -224,10 +221,7 @@ backward <- function(logp_y_z,logp_z_zm1){
   logbeta[n,] = 0
   #
   for(i in (n-1):1){
-    w = array(dim=c(k,k))
-    for(j in 1:k){
-      w[j,] = logbeta[i+1,j]+ logp_y_z[i+1,j] +logp_z_zm1[i,,j]
-    }
+    w = logbeta[i+1,] + logp_y_z[i+1,] + t(logp_z_zm1[i,,])
     logbeta[i,] = apply(w,2,lse)
   }
   return(logbeta)
