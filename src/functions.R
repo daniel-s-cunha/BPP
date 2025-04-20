@@ -209,7 +209,7 @@ forward <-function(logp_y_z,logp_z_zm1){
   #
   for(i in 2:n){
     w = logalpha[i-1,]+logp_z_zm1[i-1,,]
-    logalpha[i,] = logp_y_z[i,] + apply(w,2,lse)
+    logalpha[i,] = logp_y_z[i,] + colLogSumExps(w)#apply(w,2,lse)
   }
   return(logalpha)
 }
@@ -221,7 +221,7 @@ backward <- function(logp_y_z,logp_z_zm1){
   #
   for(i in (n-1):1){
     w = logbeta[i+1,] + logp_y_z[i+1,] + t(logp_z_zm1[i,,])
-    logbeta[i,] = apply(w,2,lse)
+    logbeta[i,] = colLogSumExps(w)#apply(w,2,lse)
   }
   return(logbeta)
 }
@@ -358,7 +358,7 @@ taus_from_Ez<-function(Ezzm1,t,rmj=c()){
   return(tau)
 }
 
-fit <- function(X,y,k,h,psi,lam,discrete=F,geometric=F,intercept=F,normal=F,id=0,tol=1e-3,maxit=10,chtimes=NULL,nu=3){
+fit <- function(X,y,k,h,psi,lam,discrete=F,geometric=F,intercept=F,normal=F,id=0,tol=1e-3,maxit=1,chtimes=NULL,nu=3){
   #Assume X df has "datetime" as a single column, ordered by date with y
   geometric=F; if(normal){nu=NULL}#else{nu=3}#nu=0.1}
   a = init_data_priors(y,X,psi,lam,h,intercept)
@@ -409,13 +409,11 @@ fit <- function(X,y,k,h,psi,lam,discrete=F,geometric=F,intercept=F,normal=F,id=0
     logpy_k_old = 0
     for(it in 1:maxit){
       # E step
-      #
       logp_y_z = compute_logp_y_z(y,X,nu,theta,s2,intercept,normal)
       logalpha = forward(logp_y_z,logp_z_zm1)
       logbeta = backward(logp_y_z,logp_z_zm1)
       logpy_k = lse(logalpha[n,])
       Ez = compute_Ez(logalpha,logbeta,logpy_k)
-      #Ezzm1 = compute_Ezzm1(logalpha,logbeta,logp_y_z,logp_z_zm1)
       Eqz = array(0,dim=c(n,k))
       if(!normal){
         for(j in 1:k){
@@ -431,12 +429,12 @@ fit <- function(X,y,k,h,psi,lam,discrete=F,geometric=F,intercept=F,normal=F,id=0
       if(class(theta)[1]=='try-error')return(theta)
       s2 = am_s2(Eqz,Ez,y,X,theta,lam,Phi_inv)
       rmj = which((s2<1e-100)|is.nan(s2)); 
-      if(!normal){
-        Ezlogq = compute_Ezlogq(y,X,theta,s2,nu)
-        if(length(rmj)>0){Elogq = rowSums(Ezlogq[,-rmj]*Ez[,-rmj])} else{Elogq = rowSums(Ezlogq*Ez)}
-        #nu = am_nu(y,theta,s2,nu,Eq,Elogq)
-        #cat('nu = ',nu,'\n')
-      }
+      # if(!normal){
+      #   Ezlogq = compute_Ezlogq(y,X,theta,s2,nu)
+      #   if(length(rmj)>0){Elogq = rowSums(Ezlogq[,-rmj]*Ez[,-rmj])} else{Elogq = rowSums(Ezlogq*Ez)}
+      #   #nu = am_nu(y,theta,s2,nu,Eq,Elogq)
+      #   #cat('nu = ',nu,'\n')
+      # }
       #
       # Check convergence
       #cat("Marginal log(p(y)): ", logpy_k,"\n\n")
@@ -458,7 +456,6 @@ BPP <- function(X,y,K,nu=3,intercept=F){
   Ez_list = list(); Ey_x_list=list(); theta_list=list();rmj_list=list(); Phi_inv_list=list();sigma_list=list()
   logpy_k = c()
   for(k in 1:K){
-    cat("Running EM for k =",k,"regimes\n")
     b = fit(X,y,k,h,psi,lam,nu=nu,discrete=F,geometric=F,intercept=intercept,normal=F)
     #
     Ez_list[[k]] = b$Ez; theta_list[[k]] = b$theta; Phi_inv_list[[k]] = b$Phi_inv; sigma_list[[k]] = b$s2
@@ -477,7 +474,6 @@ fit_EM <- function(X,y,K,h=2,psi=0.1,lam=1,nu=3,quants=c(0.025,0.5,0.975),discre
   logpy_k = c()
   K_sub = K
   for(k in 1:K){
-    cat("Running EM for k =",k,"regimes\n")
     b = fit(X,y,k,h,psi,lam,nu=nu,discrete=discrete,geometric=geometric,intercept=intercept,normal=normal)
     #
     Ez_list[[k]] = b$Ez; Eq_list[[k]] = b$Eq; theta_list[[k]] = b$theta; Phi_inv_list[[k]] = b$Phi_inv; sigma_list[[k]] = b$s2
@@ -503,7 +499,6 @@ fit_EM2 <- function(X,y,K,h,psi,lam,nu=3,quants=c(0.025,0.5,0.975),discrete=F,ge
   Ez_list = list(); Phi_inv_list=list();sigma_list=list()
   logpy_k = c()
   for(k in 1:K){
-    cat("Running EM for k =",k,"regimes\n")
     b = fit(X,y,k,h,psi,lam,nu=nu,discrete=discrete,geometric=geometric,intercept=intercept,normal=normal)
     #
     Ez_list[[k]] = b$Ez; Phi_inv_list[[k]] = b$Phi_inv; sigma_list[[k]] = b$s2
