@@ -359,7 +359,7 @@ taus_from_Ez<-function(Ezzm1,t,rmj=c()){
   return(tau)
 }
 
-fit <- function(X,y,k,h,psi,lam,discrete=F,geometric=F,intercept=F,normal=F,id=0,tol=1e-3,maxit=1,chtimes=NULL,nu=3){
+fit <- function(X,y,k,h,psi,lam,discrete=F,geometric=F,intercept=F,normal=F,id=0,tol=1e-3,maxit=3,chtimes=NULL,nu=3){
   #Assume X df has "datetime" as a single column, ordered by date with y
   geometric=F; if(normal){nu=NULL}#else{nu=3}#nu=0.1}
   a = init_data_priors(y,X,psi,lam,h,intercept)
