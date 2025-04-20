@@ -259,13 +259,50 @@ compute_prior <-function(k,theta,s2,Phi_inv){
   return(logpr)
 }
 
+# am_theta <- function(Eqz,Phi_inv,X,y,th,intercept=F){
+#   if(intercept){
+#     k = dim(Eqz)[2]; n = length(y); p = dim(X)[2]; th = array(0,dim=c(p,k))
+#     for(j in 1:k){
+#       W = diag(Eqz[,j])
+#       XtW = crossprod(X,W)
+#       ch = try(chol(XtW%*%X + Phi_inv),silent=T)
+#       if(class(ch)[1]!='try-error'){th[,j] = chol_solve(ch,XtW%*%y)} else{th[,j] = rep(0,p)}
+#     }
+#     return(list(th=th))
+#   }else{
+#     k = dim(Eqz)[2]; n = length(y); p = dim(X)[2];
+#     dw = 6; up = 7;#IAH start at 6,7; int slp 2,3
+#     Xu = X[,up:p]
+#     y_tild = y - Xu%*%th[up:p,1]
+#     th = array(0,dim=c(p,k))
+#     #
+#     y_star = rep(y,k); 
+#     X_star = do.call(rbind, replicate(k, Xu, simplify=FALSE)); 
+#     W_star = diag(vec(Eqz)[,1]);
+#     #
+#     Xd = X[,1:dw]
+#     Phi_inv_d = Phi_inv[1:dw,1:dw]
+#     for(j in 1:k){
+#       W = diag(Eqz[,j])
+#       XdtW = crossprod(Xd,W)
+#       ch = try(chol(XdtW%*%Xd + Phi_inv_d),silent=T)
+#       th[1:dw,j] = chol_solve(ch,XdtW%*%y_tild)
+#       y_star[(1:n)+n*(j-1)] = y - Xd%*%th[1:dw,j]
+#     }
+#     XtW_star = crossprod(X_star,W_star)
+#     ch = try(chol(XtW_star%*%X_star + Phi_inv[up:p,up:p]),silent=T)
+#     if(class(ch)[1]!='try-error'){th_star = chol_solve(ch,XtW_star%*%y_star)}
+#     th[up:p,] = th_star
+#     return(list(th=th))
+#   }
+# }
+
 am_theta <- function(Eqz,Phi_inv,X,y,th,intercept=F){
   if(intercept){
     k = dim(Eqz)[2]; n = length(y); p = dim(X)[2]; th = array(0,dim=c(p,k))
     for(j in 1:k){
-      W = diag(Eqz[,j])
-      XtW = crossprod(X,W)
-      ch = try(chol(XtW%*%X + Phi_inv),silent=T)
+      Xw = X*Eqz[,j]
+      ch = try(chol(crossprod(X,Xw) + Phi_inv),silent=T)
       if(class(ch)[1]!='try-error'){th[,j] = chol_solve(ch,XtW%*%y)} else{th[,j] = rep(0,p)}
     }
     return(list(th=th))
