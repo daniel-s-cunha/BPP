@@ -1,4 +1,4 @@
-library(matrixStat)
+library(matrixStats)
 neg.log.epsilon = 52 * log(2) # ~ 36
 
 rmvnorm <- function(mean, sigma){
