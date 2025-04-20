@@ -63,11 +63,10 @@ rinvchisq <- function(n, df, scale) {
   return(x)
 }
 
-create_prior_cov <- function(psi,lam,h,ny,decay='exponential'){
+create_prior_cov <- function(psi,lam,h,ny){
   #h is num harmonics
   #Y is num years
-  if(decay=='exponential') phi = psi*exp(lam*(1-(1:h)));
-  if(decay=='power') phi = psi*(h-(1:h)+1)^lam;
+  phi = psi*exp(lam*(1-(1:h)));
   D = diag(phi)
   #
   Dc = D - tcrossprod(phi)/sum(phi) #condition on sum(param)=0
@@ -227,10 +226,8 @@ backward <- function(logp_y_z,logp_z_zm1){
   return(logbeta)
 }
 
-#FIXME: Return logp_y so you don't need to recalculate
 compute_Ez <-function(logalpha,logbeta,logpy_k){
   n = dim(logalpha)[1]
-  #logpy_k = lse(logalpha[n,]) #logp_y = apply(logalpha+logbeta,1,lse)
   Ez = exp(logalpha + logbeta - logpy_k)
   return(Ez) 
 }
@@ -259,51 +256,14 @@ compute_prior <-function(k,theta,s2,Phi_inv){
   return(logpr)
 }
 
-# am_theta <- function(Eqz,Phi_inv,X,y,th,intercept=F){
-#   if(intercept){
-#     k = dim(Eqz)[2]; n = length(y); p = dim(X)[2]; th = array(0,dim=c(p,k))
-#     for(j in 1:k){
-#       W = diag(Eqz[,j])
-#       XtW = crossprod(X,W)
-#       ch = try(chol(XtW%*%X + Phi_inv),silent=T)
-#       if(class(ch)[1]!='try-error'){th[,j] = chol_solve(ch,XtW%*%y)} else{th[,j] = rep(0,p)}
-#     }
-#     return(list(th=th))
-#   }else{
-#     k = dim(Eqz)[2]; n = length(y); p = dim(X)[2];
-#     dw = 6; up = 7;#IAH start at 6,7; int slp 2,3
-#     Xu = X[,up:p]
-#     y_tild = y - Xu%*%th[up:p,1]
-#     th = array(0,dim=c(p,k))
-#     #
-#     y_star = rep(y,k); 
-#     X_star = do.call(rbind, replicate(k, Xu, simplify=FALSE)); 
-#     W_star = diag(vec(Eqz)[,1]);
-#     #
-#     Xd = X[,1:dw]
-#     Phi_inv_d = Phi_inv[1:dw,1:dw]
-#     for(j in 1:k){
-#       W = diag(Eqz[,j])
-#       XdtW = crossprod(Xd,W)
-#       ch = try(chol(XdtW%*%Xd + Phi_inv_d),silent=T)
-#       th[1:dw,j] = chol_solve(ch,XdtW%*%y_tild)
-#       y_star[(1:n)+n*(j-1)] = y - Xd%*%th[1:dw,j]
-#     }
-#     XtW_star = crossprod(X_star,W_star)
-#     ch = try(chol(XtW_star%*%X_star + Phi_inv[up:p,up:p]),silent=T)
-#     if(class(ch)[1]!='try-error'){th_star = chol_solve(ch,XtW_star%*%y_star)}
-#     th[up:p,] = th_star
-#     return(list(th=th))
-#   }
-# }
-
 am_theta <- function(Eqz,Phi_inv,X,y,th,intercept=F){
   if(intercept){
     k = dim(Eqz)[2]; n = length(y); p = dim(X)[2]; th = array(0,dim=c(p,k))
     for(j in 1:k){
       Xw = X*Eqz[,j]
+      XtWy = crossprod(Xw, y)
       ch = try(chol(crossprod(X,Xw) + Phi_inv),silent=T)
-      if(class(ch)[1]!='try-error'){th[,j] = chol_solve(ch,XtW%*%y)} else{th[,j] = rep(0,p)}
+      if(class(ch)[1]!='try-error'){th[,j] = chol_solve(ch,XtWy)} else{th[,j] = rep(0,p)}
     }
     return(list(th=th))
   }else{
@@ -315,20 +275,22 @@ am_theta <- function(Eqz,Phi_inv,X,y,th,intercept=F){
     #
     y_star = rep(y,k); 
     X_star = do.call(rbind, replicate(k, Xu, simplify=FALSE)); 
-    W_star = diag(vec(Eqz)[,1]);
+    w_star = vec(Eqz)[,1]
     #
     Xd = X[,1:dw]
     Phi_inv_d = Phi_inv[1:dw,1:dw]
     for(j in 1:k){
-      W = diag(Eqz[,j])
-      XdtW = crossprod(Xd,W)
-      ch = try(chol(XdtW%*%Xd + Phi_inv_d),silent=T)
-      th[1:dw,j] = chol_solve(ch,XdtW%*%y_tild)
+      w = Eqz[,j]
+      Xdw = Xd*w
+      XdtWy = crossprod(Xdw, y_tild)
+      ch = try(chol(crossprod(Xd,Xdw) + Phi_inv_d),silent=T)
+      th[1:dw,j] = chol_solve(ch,XdtWy)
       y_star[(1:n)+n*(j-1)] = y - Xd%*%th[1:dw,j]
     }
-    XtW_star = crossprod(X_star,W_star)
-    ch = try(chol(XtW_star%*%X_star + Phi_inv[up:p,up:p]),silent=T)
-    if(class(ch)[1]!='try-error'){th_star = chol_solve(ch,XtW_star%*%y_star)}
+    Xw_star = X_star*w_star
+    XtW_star_y_star = crossprod(Xw_star, y_star)
+    ch = try(chol(crossprod(X_star,Xw_star) + Phi_inv[up:p,up:p]),silent=T)
+    if(class(ch)[1]!='try-error'){th_star = chol_solve(ch,XtW_star_y_star)}
     th[up:p,] = th_star
     return(list(th=th))
   }
@@ -503,7 +465,7 @@ BPP <- function(X,y,K,nu=3,intercept=F){
     logpy_k = c(logpy_k,b$logpy_k)
   }
   logpk_y = compute_pk_y(n,logpy_k,b$t,Phi_inv_list,sigma_list,intercept=intercept,nonInf_pk=F,discrete=F)
-  res = lapply(quants, function(qu) bayes_est(qu,n,K,Ez_list,exp(logpk_y),samples=F))  
+  res = lapply(quants, function(qu) bayes_est(qu,n,K,Ez_list,exp(logpk_y),samples=F))
   theta = theta_list[[which.max(logpk_y)]]
   return(list(taus=res[[1]]$taus,logpk_y=logpk_y,theta=theta))
 }
@@ -556,23 +518,22 @@ fit_EM2 <- function(X,y,K,h,psi,lam,nu=3,quants=c(0.025,0.5,0.975),discrete=F,ge
 }
 
 bayes_est <- function(qu,n,K,Z,pk_y,samples=T){
-  zm = c()
-  taus = c()
-  for(i in 1:n){
-    sp = 0
-    for(j in 1:K){
-      for(k in j:K){
-        Ez = Z[[k]]; Ez[is.nan(Ez)]=0; 
-        if(samples){
-          sp = sp + mean(Ez[i,]==j)*pk_y[k]
-        }else{
-          sp = sp + Ez[i,j]*pk_y[k]
-        }
-      }
-      if(sp>=qu){if(i>1) if(j>zm[i-1]) taus = c(taus,i); zm = c(zm,j); break}
+  sp <- matrix(0, n, K)
+  for(k in 1:K){
+    Ez <- Z[[k]]
+    Ez[is.nan(Ez)] <- 0
+    if (samples) {
+      Pk <- t(apply(Ez, 1, function(x) tabulate(x, nbins = K) / length(x)))
+    } else {
+      Pk <- Ez
     }
+    js <- seq_len(k)
+    sp[, js] <- sp[, js] + pk_y[k] * Pk[, js]
   }
-  return(list(taus=taus,zm=zm))
+  idx <- sp >= qu
+  zm  <- max.col(idx, ties.method = "first")
+  taus <- which(c(FALSE, diff(zm) > 0))
+  list(taus = taus, zm = zm)
 }
 
 full_setup <- function(X,h,psi,lam){
