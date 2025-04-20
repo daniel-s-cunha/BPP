@@ -301,7 +301,7 @@ am_s2 <- function(Eqz,Ez,y,X,th,lam,Phi_inv){
   k = dim(Eqz)[2]; n = length(y); p = dim(X)[2];
   s2 = array(0,dim=c(k))
   for(j in 1:k){
-    s2[j] = (sum(Eqz[,j]*(y-X%*%th[,j])^2) + crossprod(th[,j],Phi_inv)%*%th[,j])#/(sum(Ez[,j])+p+1)
+    s2[j] = crossprod(Eqz[,j],(y-X%*%th[,j])^2) + crossprod(th[,j],Phi_inv)%*%th[,j]
   }
   s2 = rep(sum(s2)/(n + k*p + 2),k)
   return(s2)
