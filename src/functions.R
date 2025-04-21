@@ -95,7 +95,7 @@ bernstein<-function(j,k,t){
 
 compute_p_z <- function(t,k){
   n = length(t)
-  p_z = array(0,dim=c(n,k))
+  p_z = matrix(0,n,k) #array(0,dim=c(n,k))
   p_z[,1] = bernstein(1,k,t)
   for(j in 2:k){
     p_z[,j] = bernstein(j,k,t)
@@ -117,7 +117,7 @@ compute_p_z_zm1 <- function(t,n,k){
   # Since for each condition there can only be the current and next state,
   # we only need to store the probability for the current state for each condition.
   # Then the probability of the next state is p(z=c+1 | zm1=c) = 1 - p(z=c | zm1=c)  
-  p_z_zm1     = array(dim=c(n-1,k)) 
+  p_z_zm1     = matrix(0,n-1,k) #array(dim=c(n-1,k)) 
   for(j in 1:k){
     p_z_zm1[,j] = ((1-t[2:n])/(1-t[1:(n-1)]))^(k-j) / (((1-t[2:n])/(1-t[1:(n-1)]))^(k-j) + (k-j)*(t[2:n]-t[1:(n-1)])/(1-t[1:(n-1)]) * ((1-t[2:n])/(1-t[1:(n-1)]))^(k-j-1));
   }
@@ -141,7 +141,7 @@ compute_p_z_zm1_nonID <- function(t,n,k){
 }
 
 compute_p_z_zm1_geometric <- function(t,n,k,ps){
-  p_z_zm1 = array(dim=c(n-1,k)) 
+  p_z_zm1 = matrix(0,n-1,k) #array(dim=c(n-1,k)) 
   for(j in 1:(k-1)){
     p_z_zm1[,j] = ps[j]
   }
@@ -151,7 +151,7 @@ compute_p_z_zm1_geometric <- function(t,n,k,ps){
 }
 
 compute_p_z_zm1_disc <- function(n,k,p_z){
-  p_z_zm1     = array(dim=c(n-1,k)) 
+  p_z_zm1     = matrix(0,n-1,k) #array(dim=c(n-1,k)) 
   p_z_zm1[,1] = p_z[2:n,1]/p_z[1:(n-1),1]; p_z_zm1[n-1,1]=0;
   if(k>2){
   for(j in 2:(k-1)){
@@ -204,7 +204,7 @@ compute_logp_y_z <- function(y,X,nu,theta,s2,intercept=T,normal=F){
 
 forward <-function(logp_y_z,logp_z_zm1){
   n = dim(logp_y_z)[1]; k = dim(logp_y_z)[2]
-  logalpha = array(dim=c(n,k))
+  logalpha = matrix(0, n, k) #array(dim=c(n,k))
   logalpha[1,] = -Inf
   logalpha[1,1] = logp_y_z[1,1]
   #
@@ -217,7 +217,7 @@ forward <-function(logp_y_z,logp_z_zm1){
 
 backward <- function(logp_y_z,logp_z_zm1){
   n = dim(logp_y_z)[1]; k = dim(logp_y_z)[2]
-  logbeta = array(dim=c(n,k))
+  logbeta = matrix(0, n, k) #array(dim=c(n,k))
   logbeta[n,] = 0
   #
   for(i in (n-1):1){
@@ -247,7 +247,7 @@ compute_Ezzm1 <- function(logalpha,logbeta,logp_y_z,logp_z_zm1){
 compute_prior <-function(k,theta,s2,Phi_inv){
   logpr = 0
   #FIXME: Phi_inv was set to 0 when intercept=T, but there's a better solution
-  if(sum(Phi_inv)==0){Phi_inv = array(1e-6,dim=c(1,1))}
+  if(sum(Phi_inv)==0){Phi_inv = matrix(1e-6,1,1)} #array(1e-6,dim=c(1,1))}
   ch = chol(Phi_inv)
   Phi = chol_solve(ch,diag(dim(Phi_inv)[1]))
   for(j in 1:k){
@@ -259,7 +259,7 @@ compute_prior <-function(k,theta,s2,Phi_inv){
 
 am_theta <- function(Eqz,Phi_inv,X,y,th,intercept=F){
   if(intercept){
-    k = dim(Eqz)[2]; n = length(y); p = dim(X)[2]; th = array(0,dim=c(p,k))
+    k = dim(Eqz)[2]; n = length(y); p = dim(X)[2]; th = matrix(0,p,k) #array(0,dim=c(p,k))
     for(j in 1:k){
       Xw = X*Eqz[,j]
       XtWy = crossprod(Xw, y)
@@ -272,7 +272,7 @@ am_theta <- function(Eqz,Phi_inv,X,y,th,intercept=F){
     dw = 6; up = 7;#IAH start at 6,7; int slp 2,3
     Xu = X[,up:p]
     y_tild = y - Xu%*%th[up:p,1]
-    th = array(0,dim=c(p,k))
+    th = matrix(0,p,k) #array(0,dim=c(p,k))
     #
     y_star = rep(y,k); 
     X_star = do.call(rbind, replicate(k, Xu, simplify=FALSE)); 
@@ -299,7 +299,7 @@ am_theta <- function(Eqz,Phi_inv,X,y,th,intercept=F){
 
 am_s2 <- function(Eqz,Ez,y,X,th,lam,Phi_inv){
   k = dim(Eqz)[2]; n = length(y); p = dim(X)[2];
-  s2 = array(0,dim=c(k))
+  s2 = numeric(k) #array(0,dim=c(k))
   for(j in 1:k){
     s2[j] = crossprod(Eqz[,j],(y-X%*%th[,j])^2) + crossprod(th[,j],Phi_inv)%*%th[,j]
   }
@@ -326,7 +326,7 @@ compute_Ey_x <-function(t,t_pred,Ez,th,X_pred,rmj){
   if(length(rmj)>0){Ez = Ez[,-rmj]}
   k = dim(Ez)[2]
   n = dim(X_pred)[1]
-  Ey_x = array(0,dim=n)
+  Ey_x = numeric(n) #array(0,dim=n)
   if(k==1){
     dim(th) = c(length(th),1)
     Ey_x = Ey_x + (X_pred%*%th[,1])[,1]
@@ -391,7 +391,7 @@ fit <- function(X,y,k,h,psi,lam,discrete=F,geometric=F,intercept=F,normal=F,id=0
     }
     return(list(t=t,logpy_k = logpy_k, Ez = array(1,dim=c(n,1)), taus = NULL,theta=theta,s2=s2, X=X,Eq=Eq,ps=NULL,Phi_inv = Phi_inv,nu=nu,X_pred=X_pred))
   }else{
-    ps=NULL; theta = array(0,dim=c(p,k))
+    ps=NULL; theta = matrix(0,p,k) #array(0,dim=c(p,k))
     if(normal){Eq = ones(n,k)}
     if(discrete){
       p_z = compute_p_z_disc(t,k)
@@ -415,7 +415,7 @@ fit <- function(X,y,k,h,psi,lam,discrete=F,geometric=F,intercept=F,normal=F,id=0
       logbeta = backward(logp_y_z,logp_z_zm1)
       logpy_k = lse(logalpha[n,])
       Ez = compute_Ez(logalpha,logbeta,logpy_k)
-      Eqz = array(0,dim=c(n,k))
+      Eqz = matrix(0,n,k) #array(0,dim=c(n,k))
       if(!normal){
         for(j in 1:k){
           Eqz[,j] = Ez[,j] * (nu + 1)/(nu + (y-X%*%theta[,j])^2/s2[j]) 
@@ -485,8 +485,8 @@ fit_EM <- function(X,y,K,h=2,psi=0.1,lam=1,nu=3,quants=c(0.025,0.5,0.975),discre
   logpk_y = compute_pk_y(n,logpy_k,b$t,Phi_inv_list,sigma_list,intercept=intercept,nonInf_pk=nonInf_pk,discrete=discrete)
   #catn(logpk_y)
   res = lapply(quants, function(qu) bayes_est(qu,n,K,Ez_list,exp(logpk_y),samples=F))
-  Ey_x = array(0,dim=5000)
-  q = array(0,dim=n)
+  Ey_x = numeric(5000) #array(0,dim=5000)
+  q = numeric(n) #array(0,dim=n)
   for(k in 1:K){
     if(!intercept) Ey_x = Ey_x + Ey_x_list[[k]]*exp(logpk_y)[k]
     if(!normal) q = q + Eq_list[[k]]*exp(logpk_y)[k]
@@ -788,8 +788,8 @@ init_data_priors <- function(y,X,psi,lam,h,intercept){
     X = X[,colnames(X) != "year"]
     Phi = create_prior_cov(psi,lam,h,ny)
     Phi_inv = solve(Phi) 
-    flat_pr_row = array(0,dim=c(dim(X)[2]-dim(Phi)[2],dim(Phi)[2])) #avg harm has flatpr; contr has norm pr
-    flat_pr_col = array(0,dim=c(dim(X)[2],dim(X)[2]-dim(Phi)[2]))
+    flat_pr_row = matrix(0,dim(X)[2]-dim(Phi)[2],dim(Phi)[2]) #array(0,dim=c(dim(X)[2]-dim(Phi)[2],dim(Phi)[2])) #avg harm has flatpr; contr has norm pr
+    flat_pr_col = matrix(0,dim(X)[2],dim(X)[2]-dim(Phi)[2])   #array(0,dim=c(dim(X)[2],dim(X)[2]-dim(Phi)[2]))
     nip = 1e-6 #noninformative precision for intercept slope and baseline harmonics
     diag(flat_pr_col) = c(nip,5,rep(nip,2*h))#rep(.1/psi,2*h))#exp((1:(2*h))))#0
     Phi_inv = cbind(flat_pr_col, rbind(flat_pr_row,Phi_inv))
